@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Análise Estatística Comparativa</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -127,6 +127,8 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
         }
         
         .chart-title {
@@ -210,8 +212,8 @@
         }
         
         .responsive-canvas {
-            max-width: 100%;
-            height: 400px;
+            width: 100% !important;
+            height: 100% !important;
         }
         
         @media (max-width: 768px) {
@@ -235,6 +237,10 @@
             .boxplot-container {
                 flex-direction: column;
                 align-items: center;
+            }
+            
+            .chart-container {
+                height: 300px;
             }
         }
     </style>
@@ -355,8 +361,17 @@
             count: 38, q1: 12.74, q2: 15.05, q3: 17.68
         };
 
+        // Variáveis para armazenar as instâncias dos gráficos
+        let histogramChartInstance = null;
+        let boxplotChartInstance = null;
+        let ogiveChartInstance = null;
+        let resizeTimer = null;
+
         // Função para alternar abas
         function showTab(tabName) {
+            // Verificar se já está na aba ativa
+            if (document.getElementById(tabName).classList.contains('active')) return;
+            
             // Esconder todas as abas
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -371,13 +386,34 @@
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
             
-            // Renderizar gráficos conforme necessário
-            if (tabName === 'histogram') {
-                setTimeout(createHistogram, 100);
-            } else if (tabName === 'boxplot') {
-                setTimeout(createBoxplot, 100);
-            } else if (tabName === 'ogive') {
-                setTimeout(createOgive, 100);
+            // Destruir gráficos existentes antes de criar novos
+            destroyAllCharts();
+            
+            // Renderizar gráficos com pequeno atraso para garantir que a aba está visível
+            setTimeout(() => {
+                if (tabName === 'histogram') {
+                    createHistogram();
+                } else if (tabName === 'boxplot') {
+                    createBoxplot();
+                } else if (tabName === 'ogive') {
+                    createOgive();
+                }
+            }, 50);
+        }
+
+        // Função para destruir todos os gráficos
+        function destroyAllCharts() {
+            if (histogramChartInstance) {
+                histogramChartInstance.destroy();
+                histogramChartInstance = null;
+            }
+            if (boxplotChartInstance) {
+                boxplotChartInstance.destroy();
+                boxplotChartInstance = null;
+            }
+            if (ogiveChartInstance) {
+                ogiveChartInstance.destroy();
+                ogiveChartInstance = null;
             }
         }
 
@@ -414,17 +450,36 @@
         const grupo1Data = generateSyntheticData(grupo1Stats);
         const grupo2Data = generateSyntheticData(grupo2Stats);
 
+        // Configurações comuns para os gráficos
+        const commonChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            responsiveAnimationDuration: 0,
+            animation: {
+                duration: 1000,
+                onComplete: function() {
+                    this.options.animation.duration = 0;
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        };
+
         // Criar histograma
         function createHistogram() {
             const canvas = document.getElementById('histogramChart');
             if (!canvas) return;
             
             const ctx = canvas.getContext('2d');
-            
-            // Destruir gráfico existente se houver
-            if (window.histogramChartInstance) {
-                window.histogramChartInstance.destroy();
-            }
             
             // Criar bins para o histograma
             const allData = [...grupo1Data, ...grupo2Data];
@@ -449,7 +504,7 @@
                 data2.push(count2);
             }
             
-            window.histogramChartInstance = new Chart(ctx, {
+            histogramChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -468,14 +523,11 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...commonChartOptions,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                        },
+                        ...commonChartOptions.plugins,
                         title: {
-                            display: true,
+                            ...commonChartOptions.plugins.title,
                             text: 'Distribuição de Frequências'
                         }
                     },
@@ -504,10 +556,6 @@
             if (!canvas) return;
             
             const ctx = canvas.getContext('2d');
-            
-            if (window.boxplotChartInstance) {
-                window.boxplotChartInstance.destroy();
-            }
             
             // Função para calcular outliers
             function calculateOutliers(data, q1, q3) {
@@ -583,18 +631,15 @@
                 });
             }
             
-            window.boxplotChartInstance = new Chart(ctx, {
+            boxplotChartInstance = new Chart(ctx, {
                 type: 'scatter',
                 data: { datasets },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...commonChartOptions,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                        },
+                        ...commonChartOptions.plugins,
                         title: {
-                            display: true,
+                            ...commonChartOptions.plugins.title,
                             text: 'Boxplot Comparativo'
                         },
                         tooltip: {
@@ -705,10 +750,6 @@
             
             const ctx = canvas.getContext('2d');
             
-            if (window.ogiveChartInstance) {
-                window.ogiveChartInstance.destroy();
-            }
-            
             // Criar dados para ogiva
             const createOgiveData = (data) => {
                 const sorted = [...data].sort((a, b) => a - b);
@@ -721,7 +762,7 @@
             const ogive1 = createOgiveData(grupo1Data);
             const ogive2 = createOgiveData(grupo2Data);
             
-            window.ogiveChartInstance = new Chart(ctx, {
+            ogiveChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [{
@@ -743,14 +784,11 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...commonChartOptions,
                     plugins: {
-                        legend: {
-                            position: 'top',
-                        },
+                        ...commonChartOptions.plugins,
                         title: {
-                            display: true,
+                            ...commonChartOptions.plugins.title,
                             text: 'Distribuição Acumulada (%)'
                         }
                     },
@@ -776,9 +814,25 @@
             });
         }
 
-        // Inicializar a primeira visualização
+        // Gerenciamento de redimensionamento
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                if (histogramChartInstance) {
+                    histogramChartInstance.resize();
+                }
+                if (boxplotChartInstance) {
+                    boxplotChartInstance.resize();
+                }
+                if (ogiveChartInstance) {
+                    ogiveChartInstance.resize();
+                }
+            }, 200);
+        });
+
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            // A tabela já está visível por padrão
+            // Nada a fazer aqui - a tabela já está visível por padrão
         });
     </script>
 </body>
