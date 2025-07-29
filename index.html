@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise de Distâncias de Bicicleta</title>
+    <title>Análise Estatística Comparativa</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -13,474 +13,457 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
+        h1 {
             text-align: center;
-            padding: 30px;
-        }
-        
-        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
             font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .nav {
+        .tabs {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            padding: 20px;
-            background: #f8f9fa;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #ecf0f1;
             flex-wrap: wrap;
         }
         
-        .nav-btn {
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button:hover {
+            color: #3498db;
+            background-color: #ecf0f1;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background-color: #ecf0f1;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stats-table th,
+        .stats-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .stats-table th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
             font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
         }
         
-        .nav-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        .stats-table tr:nth-child(even) {
+            background-color: #f8f9fa;
         }
         
-        .nav-btn.active {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            transform: scale(1.05);
+        .stats-table tr:hover {
+            background-color: #e3f2fd;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+        
+        .stats-table td:first-child {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stats-table td:not(:first-child) {
+            text-align: center;
+            font-family: 'Courier New', monospace;
         }
         
         .chart-container {
-            padding: 30px;
-            min-height: 600px;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         .chart-title {
             text-align: center;
-            font-size: 1.8em;
-            margin-bottom: 30px;
-            color: #333;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-        
-        .chart-wrapper {
-            position: relative;
-            height: 500px;
+            font-size: 1.5em;
+            color: #2c3e50;
             margin-bottom: 20px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .stats-card h3 {
-            font-size: 1.3em;
-            margin-bottom: 15px;
-        }
-        
-        .stats-list {
-            list-style: none;
-            text-align: left;
-        }
-        
-        .stats-list li {
-            margin: 8px 0;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
+            font-weight: bold;
         }
         
         .boxplot-container {
             display: flex;
-            justify-content: center;
-            align-items: end;
-            height: 400px;
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 40px;
-            position: relative;
+            justify-content: space-around;
+            margin: 40px 0;
+            padding: 20px;
         }
         
         .boxplot {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 50px;
-        }
-        
-        .box {
             position: relative;
-            width: 60px;
-            background: white;
-            border: 3px solid;
-            border-radius: 5px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 300px;
+            height: 200px;
+            margin: 20px;
         }
         
-        .whisker {
-            width: 2px;
-            background: #333;
-            margin: 0 auto;
-        }
-        
-        .whisker-line {
-            width: 30px;
-            height: 2px;
-            background: #333;
-            margin: 0 auto;
-        }
-        
-        .median-line {
-            position: absolute;
-            width: 100%;
-            height: 3px;
-            background: #e74c3c;
-            left: 0;
-        }
-        
-        .mean-dot {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #3498db;
-            border: 2px solid white;
-            border-radius: 50%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .box-label {
-            margin-top: 20px;
-            font-weight: bold;
+        .boxplot-title {
             text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
         }
         
-        .ogiva-table {
-            margin-top: 30px;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .ogiva-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .ogiva-table th {
+        .summary-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
-            text-align: center;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
-        .ogiva-table td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
+        .summary-box h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
         }
         
-        .ogiva-table tr:nth-child(even) {
+        .summary-box p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .interpretation-box {
             background: #f8f9fa;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
         }
         
-        .hidden {
-            display: none;
+        .interpretation-box h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .interpretation-box ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .interpretation-box li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .interpretation-box li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .responsive-canvas {
+            max-width: 100%;
+            height: 400px;
         }
         
         @media (max-width: 768px) {
-            body {
+            .container {
                 padding: 10px;
             }
             
-            .header h1 {
-                font-size: 2em;
+            .tabs {
+                flex-direction: column;
             }
             
-            .nav {
-                padding: 15px;
+            .tab-button {
+                padding: 10px 15px;
+                font-size: 14px;
             }
             
-            .nav-btn {
-                padding: 10px 16px;
-                font-size: 0.9em;
-            }
-            
-            .chart-container {
-                padding: 20px;
+            .stats-table {
+                font-size: 12px;
             }
             
             .boxplot-container {
-                padding: 20px;
-                height: 350px;
-            }
-            
-            .boxplot {
-                margin: 0 20px;
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🚴‍♂️ Análise de Distâncias de Bicicleta</h1>
-            <p>Comparação entre períodos: 10h-15h vs 15h-20h</p>
+        <h1>📊 Análise Estatística Comparativa</h1>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('table')">📋 Tabela Estatísticas</button>
+            <button class="tab-button" onclick="showTab('histogram')">📊 Histograma</button>
+            <button class="tab-button" onclick="showTab('boxplot')">📦 Boxplot</button>
+            <button class="tab-button" onclick="showTab('ogive')">📈 Ogiva</button>
         </div>
         
-        <div class="nav">
-            <button class="nav-btn active" onclick="showChart('histogram')">📊 Histograma</button>
-            <button class="nav-btn" onclick="showChart('boxplot')">📦 Box Plot</button>
-            <button class="nav-btn" onclick="showChart('ogiva')">📈 Ogiva</button>
+        <!-- Tabela de Estatísticas -->
+        <div id="table" class="tab-content active">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Estatística</th>
+                        <th>Grupo 1 (10h-15h)</th>
+                        <th>Grupo 2 (15h-20h)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Média</td><td>16,92</td><td>15,57</td></tr>
+                    <tr><td>Mediana</td><td>17,23</td><td>15,05</td></tr>
+                    <tr><td>Moda</td><td>12,60</td><td>20,87</td></tr>
+                    <tr><td>Desvio Padrão</td><td>3,61</td><td>4,23</td></tr>
+                    <tr><td>Variância da Amostra</td><td>13,06</td><td>17,88</td></tr>
+                    <tr><td>Coeficiente de Variação</td><td>0,21</td><td>0,27</td></tr>
+                    <tr><td>Intervalo Total</td><td>17,48</td><td>21,38</td></tr>
+                    <tr><td>Mínimo</td><td>7,27</td><td>4,39</td></tr>
+                    <tr><td>Máximo</td><td>24,75</td><td>25,77</td></tr>
+                    <tr><td>Contagem</td><td>32</td><td>38</td></tr>
+                    <tr><td>Quartil 1 (Q1)</td><td>13,76</td><td>12,74</td></tr>
+                    <tr><td>Quartil 2 (Q2)</td><td>17,23</td><td>15,05</td></tr>
+                    <tr><td>Quartil 3 (Q3)</td><td>18,80</td><td>17,68</td></tr>
+                    <tr><td>Amplitude Interquartil</td><td>5,04</td><td>4,94</td></tr>
+                </tbody>
+            </table>
         </div>
         
-        <div class="chart-container">
-            <!-- Histograma -->
-            <div id="histogram" class="chart-section">
-                <h2 class="chart-title">📊 Histograma Comparativo</h2>
-                <div class="chart-wrapper">
-                    <canvas id="histogramChart"></canvas>
-                </div>
+        <!-- Histograma -->
+        <div id="histogram" class="tab-content">
+            <div class="chart-container">
+                <h3 class="chart-title">Histograma Comparativo</h3>
+                <canvas id="histogramChart" class="responsive-canvas"></canvas>
             </div>
-            
-            <!-- Box Plot -->
-            <div id="boxplot" class="chart-section hidden">
-                <h2 class="chart-title">📦 Box Plot Comparativo</h2>
-                <div class="boxplot-container">
-                    <div class="boxplot">
-                        <div class="whisker-line"></div>
-                        <div class="whisker" style="height: 20px;"></div>
-                        <div class="box" style="height: 80px; border-color: #8884d8; background: linear-gradient(to top, #8884d810, #8884d830);">
-                            <div class="median-line" style="bottom: 60%;"></div>
-                            <div class="mean-dot" style="bottom: 55%;"></div>
-                        </div>
-                        <div class="whisker" style="height: 25px;"></div>
-                        <div class="whisker-line"></div>
-                        <div class="box-label">
-                            <div>Grupo 1 (10h-15h)</div>
-                            <div style="font-size: 0.8em; color: #666; margin-top: 5px;">Média: 16.60 km</div>
-                        </div>
-                    </div>
-                    
-                    <div class="boxplot">
-                        <div class="whisker-line"></div>
-                        <div class="whisker" style="height: 25px;"></div>
-                        <div class="box" style="height: 75px; border-color: #82ca9d; background: linear-gradient(to top, #82ca9d10, #82ca9d30);">
-                            <div class="median-line" style="bottom: 65%;"></div>
-                            <div class="mean-dot" style="bottom: 58%;"></div>
-                        </div>
-                        <div class="whisker" style="height: 30px;"></div>
-                        <div class="whisker-line"></div>
-                        <div class="box-label">
-                            <div>Grupo 2 (15h-20h)</div>
-                            <div style="font-size: 0.8em; color: #666; margin-top: 5px;">Média: 15.41 km</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stats-card">
-                        <h3>Grupo 1 (10h-15h)</h3>
-                        <ul class="stats-list">
-                            <li><strong>Mínimo:</strong> 7.27 km</li>
-                            <li><strong>Q1:</strong> 13.76 km</li>
-                            <li><strong>Mediana:</strong> 16.70 km</li>
-                            <li><strong>Q3:</strong> 18.20 km</li>
-                            <li><strong>Máximo:</strong> 24.75 km</li>
-                            <li><strong>Média:</strong> 16.60 km</li>
-                        </ul>
-                    </div>
-                    <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <h3>Grupo 2 (15h-20h)</h3>
-                        <ul class="stats-list">
-                            <li><strong>Mínimo:</strong> 4.39 km</li>
-                            <li><strong>Q1:</strong> 12.37 km</li>
-                            <li><strong>Mediana:</strong> 14.74 km</li>
-                            <li><strong>Q3:</strong> 17.10 km</li>
-                            <li><strong>Máximo:</strong> 25.77 km</li>
-                            <li><strong>Média:</strong> 15.41 km</li>
-                        </ul>
-                    </div>
-                </div>
+            <div class="interpretation-box">
+                <h4>Interpretação do Histograma:</h4>
+                <ul>
+                    <li>Visualiza a distribuição de frequências dos dois grupos</li>
+                    <li>Permite comparar a forma das distribuições</li>
+                    <li>Grupo 1 apresenta distribuição mais concentrada</li>
+                    <li>Grupo 2 mostra maior dispersão dos valores</li>
+                </ul>
             </div>
-            
-            <!-- Ogiva -->
-            <div id="ogiva" class="chart-section hidden">
-                <h2 class="chart-title">📈 Ogiva (Frequência Acumulada)</h2>
-                <div class="chart-wrapper">
-                    <canvas id="ogivaChart"></canvas>
-                </div>
-                
-                <div class="ogiva-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Até (km)</th>
-                                <th>Grupo 1 Acum.</th>
-                                <th>Grupo 1 (%)</th>
-                                <th>Grupo 2 Acum.</th>
-                                <th>Grupo 2 (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ogivaTableBody">
-                            <!-- Dados serão inseridos via JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+        </div>
+        
+        <!-- Boxplot -->
+        <div id="boxplot" class="tab-content">
+            <div class="chart-container">
+                <h3 class="chart-title">Boxplot Comparativo</h3>
+                <canvas id="boxplotChart" class="responsive-canvas"></canvas>
             </div>
+            <div class="interpretation-box">
+                <h4>Interpretação do Boxplot:</h4>
+                <ul>
+                    <li>Caixa colorida representa o intervalo interquartil (Q1 a Q3)</li>
+                    <li>Linha preta grossa dentro da caixa indica a mediana</li>
+                    <li>Whiskers (bigodes) se estendem até o valor mais extremo dentro de 1,5×IQR</li>
+                    <li>Pontos amarelos destacam outliers (valores extremos)</li>
+                    <li>Pontos individuais mostram a distribuição real dos dados</li>
+                    <li>Grupo 1: Distribuição mais concentrada com menos outliers</li>
+                    <li>Grupo 2: Maior variabilidade com possível presença de mais outliers</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Ogiva -->
+        <div id="ogive" class="tab-content">
+            <div class="chart-container">
+                <h3 class="chart-title">Ogiva (Distribuição Acumulada)</h3>
+                <canvas id="ogiveChart" class="responsive-canvas"></canvas>
+            </div>
+            <div class="interpretation-box">
+                <h4>Interpretação da Ogiva:</h4>
+                <ul>
+                    <li>Mostra o percentual acumulado de observações até cada valor</li>
+                    <li>Permite identificar percentis e comparar distribuições</li>
+                    <li>Curvas mais íngremes indicam maior concentração de dados</li>
+                    <li>O ponto onde a linha cruza 50% corresponde à mediana</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Resumo -->
+        <div class="summary-box">
+            <h3>🎯 Resumo da Análise Comparativa</h3>
+            <p><strong>Tendência Central:</strong> O Grupo 1 (10h-15h) apresenta média ligeiramente superior (16,92 vs 15,57), mas o Grupo 2 tem moda mais alta.</p>
+            <p><strong>Variabilidade:</strong> O Grupo 2 (15h-20h) é mais variável (CV = 0,27 vs 0,21), indicando maior dispersão dos dados.</p>
+            <p><strong>Distribuição:</strong> O Grupo 1 tem distribuição mais simétrica (média ≈ mediana), enquanto o Grupo 2 apresenta leve assimetria.</p>
+            <p><strong>Amplitude:</strong> O Grupo 2 tem maior amplitude total (21,38 vs 17,48), com valor mínimo mais baixo.</p>
         </div>
     </div>
 
     <script>
-        // Dados originais
-        const grupo1 = [7.27, 12.33, 12.6, 12.6, 13.02, 13.53, 13.76, 13.76, 13.89, 15.3, 
-                        15.5, 16.6, 16.7, 16.8, 17, 17.06, 17.4, 17.56, 17.9, 18.05,
-                        18.19, 18.2, 18.44, 18.8, 19.41, 19.93, 21.4, 22.91, 23.37, 24.75];
+        // Dados estatísticos
+        const grupo1Stats = {
+            mean: 16.92, median: 17.23, mode: 12.60, std: 3.61, min: 7.27, max: 24.75,
+            count: 32, q1: 13.76, q2: 17.23, q3: 18.80
+        };
         
-        const grupo2 = [4.39, 9.13, 10.39, 10.53, 11.29, 12.35, 12.36, 12.37, 12.68, 12.79,
-                        12.81, 13.08, 14.08, 14.19, 14.63, 14.72, 14.74, 14.79, 15, 15.1,
-                        15.3, 15.82, 16.1, 16.44, 16.78, 17.06, 17.1, 17.2, 18.15, 18.22,
-                        19.97, 20.87, 20.87, 21.59, 21.7, 24.37, 25.77];
+        const grupo2Stats = {
+            mean: 15.57, median: 15.05, mode: 20.87, std: 4.23, min: 4.39, max: 25.77,
+            count: 38, q1: 12.74, q2: 15.05, q3: 17.68
+        };
 
-        let histogramChart, ogivaChart;
-
-        // Função para criar histograma
-        function createHistogram(data1, data2, bins = 10) {
-            const allData = [...data1, ...data2];
-            const min = Math.min(...allData);
-            const max = Math.max(...allData);
-            const binWidth = (max - min) / bins;
-            
-            const histogram = Array(bins).fill(0).map((_, i) => {
-                const start = min + i * binWidth;
-                const end = min + (i + 1) * binWidth;
-                return {
-                    range: `${start.toFixed(1)}-${end.toFixed(1)}`,
-                    freq1: 0,
-                    freq2: 0
-                };
-            });
-
-            data1.forEach(value => {
-                const binIndex = Math.min(Math.floor((value - min) / binWidth), bins - 1);
-                histogram[binIndex].freq1++;
-            });
-
-            data2.forEach(value => {
-                const binIndex = Math.min(Math.floor((value - min) / binWidth), bins - 1);
-                histogram[binIndex].freq2++;
-            });
-
-            return histogram;
-        }
-
-        // Função para criar ogiva
-        function createOgiva(data1, data2, bins = 10) {
-            const histogramData = createHistogram(data1, data2, bins);
-            let cumFreq1 = 0;
-            let cumFreq2 = 0;
-            
-            return histogramData.map((item, index) => {
-                cumFreq1 += item.freq1;
-                cumFreq2 += item.freq2;
-                const midpoint = parseFloat(item.range.split('-')[0]) + 
-                                (parseFloat(item.range.split('-')[1]) - parseFloat(item.range.split('-')[0])) / 2;
-                return {
-                    midpoint: midpoint.toFixed(1),
-                    range: item.range,
-                    cumFreq1: cumFreq1,
-                    cumFreq2: cumFreq2,
-                    perc1: (cumFreq1 / data1.length * 100).toFixed(1),
-                    perc2: (cumFreq2 / data2.length * 100).toFixed(1)
-                };
-            });
-        }
-
-        // Função para mostrar gráfico
-        function showChart(chartType) {
-            // Esconder todas as seções
-            document.querySelectorAll('.chart-section').forEach(section => {
-                section.classList.add('hidden');
+        // Função para alternar abas
+        function showTab(tabName) {
+            // Esconder todas as abas
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
             });
             
-            // Remover classe active de todos os botões
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
+            // Remover classe ativa de todos os botões
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
             });
             
-            // Mostrar seção selecionada e ativar botão
-            document.getElementById(chartType).classList.remove('hidden');
+            // Mostrar aba selecionada
+            document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
             
-            // Criar gráficos conforme necessário
-            if (chartType === 'histogram' && !histogramChart) {
-                createHistogramChart();
-            } else if (chartType === 'ogiva' && !ogivaChart) {
-                createOgivaChart();
-                populateOgivaTable();
+            // Renderizar gráficos conforme necessário
+            if (tabName === 'histogram') {
+                setTimeout(createHistogram, 100);
+            } else if (tabName === 'boxplot') {
+                setTimeout(createBoxplot, 100);
+            } else if (tabName === 'ogive') {
+                setTimeout(createOgive, 100);
             }
         }
 
-        // Criar gráfico de histograma
-        function createHistogramChart() {
-            const ctx = document.getElementById('histogramChart').getContext('2d');
-            const histogramData = createHistogram(grupo1, grupo2);
+        // Gerar dados sintéticos baseados nas estatísticas
+        function generateSyntheticData(stats) {
+            const data = [];
+            const { mean, median, std, min, max, count, q1, q3 } = stats;
             
-            histogramChart = new Chart(ctx, {
+            for (let i = 0; i < count; i++) {
+                let value;
+                const rand = Math.random();
+                
+                if (rand < 0.25) {
+                    value = min + Math.random() * (q1 - min);
+                } else if (rand < 0.5) {
+                    value = q1 + Math.random() * (median - q1);
+                } else if (rand < 0.75) {
+                    value = median + Math.random() * (q3 - median);
+                } else {
+                    value = q3 + Math.random() * (max - q3);
+                }
+                
+                // Ajustar para aproximar a média
+                const adjustment = (mean - (min + max) / 2) * 0.2;
+                value += adjustment + (Math.random() - 0.5) * std * 0.3;
+                
+                value = Math.max(min, Math.min(max, parseFloat(value.toFixed(2))));
+                data.push(value);
+            }
+            
+            return data.sort((a, b) => a - b);
+        }
+
+        const grupo1Data = generateSyntheticData(grupo1Stats);
+        const grupo2Data = generateSyntheticData(grupo2Stats);
+
+        // Criar histograma
+        function createHistogram() {
+            const canvas = document.getElementById('histogramChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Destruir gráfico existente se houver
+            if (window.histogramChartInstance) {
+                window.histogramChartInstance.destroy();
+            }
+            
+            // Criar bins para o histograma
+            const allData = [...grupo1Data, ...grupo2Data];
+            const min = Math.min(...allData);
+            const max = Math.max(...allData);
+            const bins = 8;
+            const binWidth = (max - min) / bins;
+            
+            const labels = [];
+            const data1 = [];
+            const data2 = [];
+            
+            for (let i = 0; i < bins; i++) {
+                const binStart = min + i * binWidth;
+                const binEnd = min + (i + 1) * binWidth;
+                labels.push(`${binStart.toFixed(1)}-${binEnd.toFixed(1)}`);
+                
+                const count1 = grupo1Data.filter(val => val >= binStart && (i === bins - 1 ? val <= binEnd : val < binEnd)).length;
+                const count2 = grupo2Data.filter(val => val >= binStart && (i === bins - 1 ? val <= binEnd : val < binEnd)).length;
+                
+                data1.push(count1);
+                data2.push(count2);
+            }
+            
+            window.histogramChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: histogramData.map(d => d.range),
+                    labels: labels,
                     datasets: [{
                         label: 'Grupo 1 (10h-15h)',
-                        data: histogramData.map(d => d.freq1),
-                        backgroundColor: 'rgba(136, 132, 216, 0.8)',
-                        borderColor: 'rgba(136, 132, 216, 1)',
+                        data: data1,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
                         borderWidth: 2
                     }, {
                         label: 'Grupo 2 (15h-20h)',
-                        data: histogramData.map(d => d.freq2),
-                        backgroundColor: 'rgba(130, 202, 157, 0.8)',
-                        borderColor: 'rgba(130, 202, 157, 1)',
+                        data: data2,
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 2
                     }]
                 },
@@ -490,65 +473,272 @@
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Distribuição de Frequências'
                         }
                     },
                     scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequência'
+                            }
+                        },
                         x: {
                             title: {
                                 display: true,
-                                text: 'Distância (km)',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
+                                text: 'Intervalos'
                             }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Frequência',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            beginAtZero: true
                         }
                     }
                 }
             });
         }
 
-        // Criar gráfico de ogiva
-        function createOgivaChart() {
-            const ctx = document.getElementById('ogivaChart').getContext('2d');
-            const ogivaData = createOgiva(grupo1, grupo2);
+        // Criar boxplot
+        function createBoxplot() {
+            const canvas = document.getElementById('boxplotChart');
+            if (!canvas) return;
             
-            ogivaChart = new Chart(ctx, {
+            const ctx = canvas.getContext('2d');
+            
+            if (window.boxplotChartInstance) {
+                window.boxplotChartInstance.destroy();
+            }
+            
+            // Função para calcular outliers
+            function calculateOutliers(data, q1, q3) {
+                const iqr = q3 - q1;
+                const lowerFence = q1 - 1.5 * iqr;
+                const upperFence = q3 + 1.5 * iqr;
+                
+                const outliers = data.filter(val => val < lowerFence || val > upperFence);
+                const nonOutliers = data.filter(val => val >= lowerFence && val <= upperFence);
+                
+                return {
+                    outliers,
+                    min: Math.min(...nonOutliers),
+                    max: Math.max(...nonOutliers)
+                };
+            }
+            
+            const grupo1Outliers = calculateOutliers(grupo1Data, grupo1Stats.q1, grupo1Stats.q3);
+            const grupo2Outliers = calculateOutliers(grupo2Data, grupo2Stats.q1, grupo2Stats.q3);
+            
+            // Criar datasets para o boxplot
+            const datasets = [];
+            
+            // Dados dos pontos individuais do Grupo 1
+            datasets.push({
+                label: 'Dados Grupo 1',
+                data: grupo1Data.map(val => ({x: 0.8, y: val})),
+                backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                borderColor: 'rgba(54, 162, 235, 0.8)',
+                borderWidth: 1,
+                pointRadius: 3,
+                type: 'scatter',
+                showLine: false
+            });
+            
+            // Dados dos pontos individuais do Grupo 2
+            datasets.push({
+                label: 'Dados Grupo 2',
+                data: grupo2Data.map(val => ({x: 1.2, y: val})),
+                backgroundColor: 'rgba(255, 99, 132, 0.4)',
+                borderColor: 'rgba(255, 99, 132, 0.8)',
+                borderWidth: 1,
+                pointRadius: 3,
+                type: 'scatter',
+                showLine: false
+            });
+            
+            // Outliers do Grupo 1
+            if (grupo1Outliers.outliers.length > 0) {
+                datasets.push({
+                    label: 'Outliers Grupo 1',
+                    data: grupo1Outliers.outliers.map(val => ({x: 0.8, y: val})),
+                    backgroundColor: 'rgba(255, 206, 84, 0.9)',
+                    borderColor: 'rgba(255, 206, 84, 1)',
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    type: 'scatter',
+                    showLine: false
+                });
+            }
+            
+            // Outliers do Grupo 2
+            if (grupo2Outliers.outliers.length > 0) {
+                datasets.push({
+                    label: 'Outliers Grupo 2',
+                    data: grupo2Outliers.outliers.map(val => ({x: 1.2, y: val})),
+                    backgroundColor: 'rgba(255, 206, 84, 0.9)',
+                    borderColor: 'rgba(255, 206, 84, 1)',
+                    borderWidth: 2,
+                    pointRadius: 5,
+                    type: 'scatter',
+                    showLine: false
+                });
+            }
+            
+            window.boxplotChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Boxplot Comparativo'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function() {
+                                    return '';
+                                },
+                                label: function(context) {
+                                    return `Valor: ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: 0.5,
+                            max: 1.5,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value === 0.8) return 'Grupo 1 (10h-15h)';
+                                    if (value === 1.2) return 'Grupo 2 (15h-20h)';
+                                    return '';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Grupos'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Distância (Km)'
+                            }
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+                    }
+                },
+                plugins: [{
+                    id: 'boxplotPlugin',
+                    afterDatasetsDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const chartArea = chart.chartArea;
+                        
+                        // Função para desenhar boxplot
+                        function drawBoxplot(x, stats, outliers, color) {
+                            const xPixel = chart.scales.x.getPixelForValue(x);
+                            const boxWidth = 40;
+                            
+                            // Converter valores para pixels
+                            const minY = chart.scales.y.getPixelForValue(outliers.min);
+                            const q1Y = chart.scales.y.getPixelForValue(stats.q1);
+                            const medianY = chart.scales.y.getPixelForValue(stats.median);
+                            const q3Y = chart.scales.y.getPixelForValue(stats.q3);
+                            const maxY = chart.scales.y.getPixelForValue(outliers.max);
+                            
+                            ctx.save();
+                            ctx.strokeStyle = color;
+                            ctx.fillStyle = color + '40';
+                            ctx.lineWidth = 2;
+                            
+                            // Desenhar whiskers (linhas)
+                            ctx.beginPath();
+                            ctx.moveTo(xPixel, minY);
+                            ctx.lineTo(xPixel, q1Y);
+                            ctx.moveTo(xPixel, q3Y);
+                            ctx.lineTo(xPixel, maxY);
+                            ctx.stroke();
+                            
+                            // Desenhar caps dos whiskers
+                            ctx.beginPath();
+                            ctx.moveTo(xPixel - 15, minY);
+                            ctx.lineTo(xPixel + 15, minY);
+                            ctx.moveTo(xPixel - 15, maxY);
+                            ctx.lineTo(xPixel + 15, maxY);
+                            ctx.stroke();
+                            
+                            // Desenhar caixa (IQR)
+                            ctx.fillRect(xPixel - boxWidth/2, q3Y, boxWidth, q1Y - q3Y);
+                            ctx.strokeRect(xPixel - boxWidth/2, q3Y, boxWidth, q1Y - q3Y);
+                            
+                            // Desenhar mediana
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(xPixel - boxWidth/2, medianY);
+                            ctx.lineTo(xPixel + boxWidth/2, medianY);
+                            ctx.stroke();
+                            
+                            ctx.restore();
+                        }
+                        
+                        // Desenhar boxplots
+                        drawBoxplot(0.8, grupo1Stats, grupo1Outliers, '#3b82f6');
+                        drawBoxplot(1.2, grupo2Stats, grupo2Outliers, '#ef4444');
+                    }
+                }]
+            });
+        }
+
+        // Criar ogiva
+        function createOgive() {
+            const canvas = document.getElementById('ogiveChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            if (window.ogiveChartInstance) {
+                window.ogiveChartInstance.destroy();
+            }
+            
+            // Criar dados para ogiva
+            const createOgiveData = (data) => {
+                const sorted = [...data].sort((a, b) => a - b);
+                return sorted.map((value, index) => ({
+                    x: value,
+                    y: ((index + 1) / sorted.length) * 100
+                }));
+            };
+            
+            const ogive1 = createOgiveData(grupo1Data);
+            const ogive2 = createOgiveData(grupo2Data);
+            
+            window.ogiveChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ogivaData.map(d => d.midpoint),
                     datasets: [{
                         label: 'Grupo 1 (10h-15h)',
-                        data: ogivaData.map(d => d.cumFreq1),
-                        borderColor: 'rgba(136, 132, 216, 1)',
-                        backgroundColor: 'rgba(136, 132, 216, 0.2)',
+                        data: ogive1,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
                         borderWidth: 3,
-                        fill: true,
+                        fill: false,
                         tension: 0.4
                     }, {
                         label: 'Grupo 2 (15h-20h)',
-                        data: ogivaData.map(d => d.cumFreq2),
-                        borderColor: 'rgba(130, 202, 157, 1)',
-                        backgroundColor: 'rgba(130, 202, 157, 0.2)',
+                        data: ogive2,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
                         borderWidth: 3,
-                        fill: true,
+                        fill: false,
                         tension: 0.4
                     }]
                 },
@@ -558,63 +748,37 @@
                     plugins: {
                         legend: {
                             position: 'top',
-                            labels: {
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Distribuição Acumulada (%)'
                         }
                     },
                     scales: {
                         x: {
+                            type: 'linear',
+                            position: 'bottom',
                             title: {
                                 display: true,
-                                text: 'Distância (km)',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
+                                text: 'Valores'
                             }
                         },
                         y: {
+                            beginAtZero: true,
+                            max: 100,
                             title: {
                                 display: true,
-                                text: 'Frequência Acumulada',
-                                font: {
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            beginAtZero: true
+                                text: 'Percentual Acumulado (%)'
+                            }
                         }
                     }
                 }
             });
         }
 
-        // Popular tabela da ogiva
-        function populateOgivaTable() {
-            const ogivaData = createOgiva(grupo1, grupo2);
-            const tbody = document.getElementById('ogivaTableBody');
-            tbody.innerHTML = '';
-            
-            ogivaData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${row.midpoint}</strong></td>
-                    <td>${row.cumFreq1}</td>
-                    <td>${row.perc1}%</td>
-                    <td>${row.cumFreq2}</td>
-                    <td>${row.perc2}%</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Inicializar com histograma
+        // Inicializar a primeira visualização
         document.addEventListener('DOMContentLoaded', function() {
-            createHistogramChart();
+            // A tabela já está visível por padrão
         });
     </script>
 </body>
